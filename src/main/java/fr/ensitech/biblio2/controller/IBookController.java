@@ -10,7 +10,7 @@ public interface IBookController {
   ResponseEntity<Book> createBook(Book book);
   ResponseEntity<Book> getBookById(long id);
   ResponseEntity<Book> updateBook(Book book);
-  ResponseEntity<Book> deleteBookById(long id);
+  ResponseEntity<String> deleteBookById(long id);
   ResponseEntity<List<Book>> getAllBooks();
 
 }

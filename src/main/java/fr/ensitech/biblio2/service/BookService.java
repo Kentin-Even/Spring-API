@@ -19,16 +19,19 @@ public class BookService implements IBookService {
 
   @Override
   public void addOrUpdateBook(Book book) throws Exception {
-    if (book.getId() < 0) {
-      throw new Exception("Book id must be greater than 0");
-    }
-    if (book.getId() == 0) {
+    if (book.getId() == null || book.getId() == 0) {
       bookRepository.save(book);
     } else {
-      Book _book = bookRepository.findById(book.getId()).get();
-      if (_book == null) {
-        throw new Exception("Book not found");
+      if (book.getId() < 0) {
+        throw new Exception("Book id must be greater than 0");
       }
+
+      Optional<Book> optionalBook = bookRepository.findById(book.getId());
+      if (optionalBook.isEmpty()) {
+        throw new Exception("Book with id " + book.getId() + " not found");
+      }
+
+      Book _book = optionalBook.get();
       _book.setIsbn(book.getIsbn());
       _book.setTitle(book.getTitle());
       _book.setDescription(book.getDescription());
@@ -40,13 +43,15 @@ public class BookService implements IBookService {
       _book.setPublished(book.isPublished());
       bookRepository.save(_book);
     }
-
-    bookRepository.save(book);
   }
 
   @Override
   public void deleteBook(long id) throws Exception {
-    bookRepository.delete(id);
+    Optional<Book> optionalBook = bookRepository.findById(id);
+    if (optionalBook.isEmpty()) {
+      throw new Exception("Book with id " + id + " not found");
+    }
+    bookRepository.deleteById(id);  // Utiliser deleteById au lieu de delete
   }
 
   @Override

@@ -10,4 +10,9 @@ public interface IUserService {
   void createUser(User user) throws Exception;
   User getUserById(long id) throws Exception;
   List<User> getUsersByBirthdate(Date dateInf, Date dateSup) throws Exception;
+  User activeUser(long id) throws Exception;
+  User authenticatedUser(String email, String password) throws Exception;
+  User deleteUser(long id) throws Exception;
+
+  void sendActivationMail(String email);
 }

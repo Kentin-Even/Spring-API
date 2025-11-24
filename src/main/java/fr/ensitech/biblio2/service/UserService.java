@@ -17,7 +17,11 @@ public class UserService implements IUserService {
 
   @Override
   public void createUser(User user) throws Exception {
+    if (userRepository.findByEmail(user.getEmail()) != null) {
+      throw new Exception("User already exists");
+    }
     userRepository.save(user);
+    user.setActive(false);
   }
 
   @Override
@@ -29,8 +33,36 @@ public class UserService implements IUserService {
 
   @Override
   public List<User> getUsersByBirthdate(Date dateInf, Date dateSup) throws Exception {
-
-
     return userRepository.findByBirthdateBetween(dateInf, dateSup);
+  }
+
+  @Override
+  public User activeUser (long id) throws Exception {
+    User user = userRepository.findById(id).orElseThrow();
+    user.setActive(true);
+    return userRepository.save(user);
+  }
+
+  @Override
+  public User authenticatedUser (String email, String password) throws Exception {
+    User user = userRepository.findByEmail(email);
+    if (user != null && user.isActive() && password.equals(user.getPassword())) {
+      return user;
+    }
+    throw new Exception("Invalid credentials");
+  }
+
+  @Override
+  public User deleteUser (long id) throws Exception {
+    User user = userRepository.findById(id).orElseThrow();
+    user.setActive(false);
+    return userRepository.save(user);
+  }
+
+  @Override
+  public User sendActivationMail(String email){
+    User user = userRepository.findByEmail(email);
+    user.setActive(true);
+    return userRepository.save(user);
   }
 }

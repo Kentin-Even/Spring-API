@@ -37,6 +37,7 @@ public class BookController implements IBookController {
       bookService.addOrUpdateBook(book);
       return new ResponseEntity<>(book, HttpStatus.CREATED);
     } catch (Exception e) {
+      e.printStackTrace();
       throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Erreur lors de la création du livre");
     }
   }

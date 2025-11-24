@@ -9,7 +9,7 @@ import java.util.List;
 public interface IBookService {
 
   void addOrUpdateBook(Book book) throws Exception;
-  void deleteBook(long id) throws Exception;
+  void deleteBook(long id) throws Exception;  // Changé de Book à long
   List<Book> getBooks() throws Exception;
   Book getBook(long id) throws Exception;
   List<Book> getBooksByTitle(String title) throws Exception;

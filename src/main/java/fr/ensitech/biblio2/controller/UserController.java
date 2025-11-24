@@ -13,30 +13,29 @@ import org.springframework.web.bind.annotation.*;
 public class UserController implements IUserController {
 
   @Autowired
-    private IUserService userService;
+  private IUserService userService;
 
   @PostMapping("/register")
   @Override
   public ResponseEntity<User> createUser(@RequestBody User user) {
     if (user == null
-    || user.getFirstName() == null || user.getFirstName().isEmpty()
-    || user.getLastName() == null || user.getLastName().isEmpty()
-    || user.getEmail() == null || user.getEmail().isEmpty()
-    || user.getPassword() == null || user.getPassword().isEmpty()){
+            || user.getFirstName() == null || user.getFirstName().isEmpty()
+            || user.getLastName() == null || user.getLastName().isEmpty()
+            || user.getEmail() == null || user.getEmail().isEmpty()
+            || user.getPassword() == null || user.getPassword().isEmpty()) {
 
       return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-
     }
-    try{
+    try {
       userService.createUser(user);
       userService.sendActivationMail(user.getEmail());
-      return new ResponseEntity<>(user, HttpStatus.OK);
-    } catch (Exception e){
+      return new ResponseEntity<>(user, HttpStatus.CREATED);
+    } catch (Exception e) {
       e.printStackTrace();
       return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
     }
-
   }
+
   @PostMapping("/send-activation")
   @Override
   public ResponseEntity<User> sendActivationMail(@RequestParam String email) {
@@ -49,47 +48,43 @@ public class UserController implements IUserController {
     }
   }
 
-  @PostMapping("/activate/{id}")
+  @GetMapping("/activate/{id}") // Changé de POST à GET
   @Override
-  public ResponseEntity<User> activateUser(@PathVariable long id) {
+  public ResponseEntity<String> activeUser(@PathVariable long id) {
     try {
-      User activedUser = userService.activeUser(id);
-      return new ResponseEntity<>(activedUser, HttpStatus.OK);
+      User activatedUser = userService.activeUser(id);
+      return new ResponseEntity<>("Votre compte a été activé avec succès ! Vous pouvez maintenant vous connecter.", HttpStatus.OK);
     } catch (Exception e) {
       e.printStackTrace();
-      return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+      return new ResponseEntity<>("Erreur lors de l'activation du compte. Lien invalide ou compte déjà activé.", HttpStatus.NOT_FOUND);
     }
   }
 
   @PostMapping("/login")
   @Override
-  public ResponseEntity<User> authenticatedUser(@RequestBody String email, @RequestBody String password){
-    if(email == null || email.isEmpty() || password == null || password.isEmpty()){
-      return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+  public ResponseEntity<String> authenticatedUser(@RequestParam String email,
+                                                  @RequestParam String password) {
+    if (email == null || email.isEmpty() || password == null || password.isEmpty()) {
+      return new ResponseEntity<>("Email et mot de passe requis", HttpStatus.BAD_REQUEST);
     }
-    try{
-      if(userService.authenticatedUser(email, password).isActive()){
-        return new ResponseEntity<>(HttpStatus.OK);
-      }
-      else{
-        return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
-      }
-    }catch (Exception e){
+    try {
+      User user = userService.authenticatedUser(email, password);
+      return new ResponseEntity<>("Connexion réussie", HttpStatus.OK);
+    } catch (Exception e) {
       e.printStackTrace();
-      return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+      return new ResponseEntity<>("Identifiants invalides ou compte non activé", HttpStatus.UNAUTHORIZED);
     }
   }
 
   @PutMapping("/unsubscribe")
   @Override
-  public ResponseEntity<User> deleteUser(@RequestBody User user) {
-    try{
-      userService.deleteUser(user.getId());
-      return new ResponseEntity<>(HttpStatus.OK);
+  public ResponseEntity<String> deleteUser(@RequestBody User user) {
+    try {
+      User deletedUser = userService.deleteUser(user.getId());
+      return new ResponseEntity<>("Votre compte a été désactivé avec succès. Un email de confirmation vous a été envoyé.", HttpStatus.OK);
     } catch (Exception e) {
       e.printStackTrace();
-      return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+      return new ResponseEntity<>("Erreur lors de la désinscription. Veuillez réessayer.", HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
-
 }

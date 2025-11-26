@@ -1,5 +1,9 @@
 package fr.ensitech.biblio2.controller;
 
+import fr.ensitech.biblio2.dto.AuthenticationResponse;
+import fr.ensitech.biblio2.dto.PasswordRenewalRequest;
+import fr.ensitech.biblio2.dto.SecurityAnswerVerificationRequest;
+import fr.ensitech.biblio2.dto.UserRegistrationRequest;
 import fr.ensitech.biblio2.entity.User;
 import fr.ensitech.biblio2.service.IUserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,34 +21,57 @@ public class UserController implements IUserController {
 
   @PostMapping("/register")
   @Override
-  public ResponseEntity<User> createUser(@RequestBody User user) {
-    if (user == null
-            || user.getFirstName() == null || user.getFirstName().isEmpty()
-            || user.getLastName() == null || user.getLastName().isEmpty()
-            || user.getEmail() == null || user.getEmail().isEmpty()
-            || user.getPassword() == null || user.getPassword().isEmpty()) {
+  public ResponseEntity<?> createUser(@RequestBody UserRegistrationRequest request) {
+    if (request == null
+            || request.getFirstName() == null || request.getFirstName().isEmpty()
+            || request.getLastName() == null || request.getLastName().isEmpty()
+            || request.getEmail() == null || request.getEmail().isEmpty()
+            || request.getPassword() == null || request.getPassword().isEmpty()
+            || request.getSecurityQuestion() == null
+            || request.getSecurityAnswer() == null || request.getSecurityAnswer().isEmpty()) {
 
-      return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+      return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+              .body("{\"message\": \"Tous les champs sont obligatoires, y compris la question et réponse de sécurité\"}");
     }
+
+    if (request.getSecurityAnswer().length() > 32) {
+      return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+              .body("{\"message\": \"La réponse de sécurité ne peut pas dépasser 32 caractères\"}");
+    }
+
     try {
+      User user = new User();
+      user.setFirstName(request.getFirstName());
+      user.setLastName(request.getLastName());
+      user.setEmail(request.getEmail());
+      user.setPassword(request.getPassword());
+      user.setBirthdate(request.getBirthdate());
+      user.setSecurityQuestion(request.getSecurityQuestion());
+      user.setSecurityAnswerHash(request.getSecurityAnswer());
+      user.setRole("U");
+
       userService.createUser(user);
       userService.sendActivationMail(user.getEmail());
-      return new ResponseEntity<>(user, HttpStatus.CREATED);
+
+      return ResponseEntity.status(HttpStatus.CREATED)
+              .body("{\"message\": \"Utilisateur créé avec succès. Un email d'activation a été envoyé.\"}");
     } catch (Exception e) {
       e.printStackTrace();
-      return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+      return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+              .body("{\"message\": \"" + e.getMessage() + "\"}");
     }
   }
 
   @PostMapping("/send-activation")
   @Override
-  public ResponseEntity<User> sendActivationMail(@RequestParam String email) {
+  public ResponseEntity<String> sendActivationMail(@RequestParam String email) {
     try {
       userService.sendActivationMail(email);
-      return new ResponseEntity<>(HttpStatus.OK);
+      return ResponseEntity.ok("{\"message\": \"Email d'activation envoyé\"}");
     } catch (Exception e) {
       e.printStackTrace();
-      return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+      return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+              .body("{\"message\": \"Erreur lors de l'envoi de l'email\"}");
     }
   }
 
@@ -53,26 +80,55 @@ public class UserController implements IUserController {
   public ResponseEntity<String> activeUser(@PathVariable long id) {
     try {
       User activatedUser = userService.activeUser(id);
-      return new ResponseEntity<>("Votre compte a été activé avec succès ! Vous pouvez maintenant vous connecter.", HttpStatus.OK);
+      return ResponseEntity.ok("Votre compte a été activé avec succès ! Vous pouvez maintenant vous connecter.");
     } catch (Exception e) {
       e.printStackTrace();
-      return new ResponseEntity<>("Erreur lors de l'activation du compte. Lien invalide ou compte déjà activé.", HttpStatus.NOT_FOUND);
+      return ResponseEntity.status(HttpStatus.NOT_FOUND)
+              .body("Erreur lors de l'activation du compte. Lien invalide ou compte déjà activé.");
     }
   }
 
   @PostMapping("/login")
   @Override
-  public ResponseEntity<String> authenticatedUser(@RequestParam String email,
-                                                  @RequestParam String password) {
+  public ResponseEntity<?> authenticatedUser(@RequestParam String email,
+                                             @RequestParam String password) {
     if (email == null || email.isEmpty() || password == null || password.isEmpty()) {
-      return new ResponseEntity<>("Email et mot de passe requis", HttpStatus.BAD_REQUEST);
+      return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+              .body("{\"message\": \"Email et mot de passe requis\"}");
     }
+
     try {
-      User user = userService.authenticatedUser(email, password);
-      return new ResponseEntity<>("Connexion réussie", HttpStatus.OK);
+      AuthenticationResponse response = userService.authenticatedUser(email, password);
+      return ResponseEntity.ok(response);
     } catch (Exception e) {
       e.printStackTrace();
-      return new ResponseEntity<>("Identifiants invalides ou compte non activé", HttpStatus.UNAUTHORIZED);
+      return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+              .body("{\"message\": \"Identifiants invalides ou compte non activé\"}");
+    }
+  }
+
+  @PostMapping("/verify-security-answer")
+  @Override
+  public ResponseEntity<String> verifySecurityAnswer(@RequestBody SecurityAnswerVerificationRequest request) {
+    if (request == null || request.getUserId() == null ||
+            request.getSecurityAnswer() == null || request.getSecurityAnswer().isEmpty()) {
+      return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+              .body("{\"message\": \"ID utilisateur et réponse de sécurité requis\"}");
+    }
+
+    try {
+      boolean isValid = userService.verifySecurityAnswer(request.getUserId(), request.getSecurityAnswer());
+
+      if (isValid) {
+        return ResponseEntity.ok("{\"message\": \"Authentification réussie\", \"authenticated\": true}");
+      } else {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body("{\"message\": \"Réponse de sécurité incorrecte\", \"authenticated\": false}");
+      }
+    } catch (Exception e) {
+      e.printStackTrace();
+      return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+              .body("{\"message\": \"Erreur lors de la vérification: " + e.getMessage() + "\"}");
     }
   }
 
@@ -81,14 +137,14 @@ public class UserController implements IUserController {
   public ResponseEntity<String> deleteUser(@RequestBody User user) {
     try {
       User deletedUser = userService.deleteUser(user.getId());
-      return new ResponseEntity<>("Votre compte a été désactivé avec succès. Un email de confirmation vous a été envoyé.", HttpStatus.OK);
+      return ResponseEntity.ok("{\"message\": \"Votre compte a été désactivé avec succès. Un email de confirmation vous a été envoyé.\"}");
     } catch (Exception e) {
       e.printStackTrace();
-      return new ResponseEntity<>("Erreur lors de la désinscription. Veuillez réessayer.", HttpStatus.INTERNAL_SERVER_ERROR);
+      return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+              .body("{\"message\": \"Erreur lors de la désinscription. Veuillez réessayer.\"}");
     }
   }
 
-  // Nouvelle fonctionnalité : Mise à jour du profil
   @PutMapping("/{id}/profile")
   @Override
   public ResponseEntity<String> updateUserProfile(@PathVariable long id, @RequestBody User user) {
@@ -107,7 +163,6 @@ public class UserController implements IUserController {
     }
   }
 
-  // Nouvelle fonctionnalité : Mise à jour du mot de passe
   @PutMapping("/{id}/{oldPwd}/{newPwd}")
   @Override
   public ResponseEntity<String> updateUserPassword(@PathVariable long id,
@@ -130,6 +185,60 @@ public class UserController implements IUserController {
       e.printStackTrace();
       return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
               .body("{\"message\": \"" + e.getMessage() + "\"}");
+    }
+  }
+
+  @PutMapping("/{email}/password/renew")
+  @Override
+  public ResponseEntity<String> renewPassword(@PathVariable String email,
+                                              @RequestBody PasswordRenewalRequest request) {
+    if (request == null ||
+            request.getOldPassword() == null || request.getOldPassword().isEmpty() ||
+            request.getNewPassword() == null || request.getNewPassword().isEmpty()) {
+      return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+              .body("{\"message\": \"L'ancien et le nouveau mot de passe sont requis\"}");
+    }
+
+    if (request.getNewPassword().length() < 6) {
+      return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+              .body("{\"message\": \"Le nouveau mot de passe doit contenir au moins 6 caractères\"}");
+    }
+
+    try {
+      userService.renewPassword(email, request.getOldPassword(), request.getNewPassword());
+      return ResponseEntity.ok("{\"message\": \"Mot de passe renouvelé avec succès\"}");
+    } catch (Exception e) {
+      e.printStackTrace();
+
+      if (e.getMessage().contains("5 derniers")) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body("{\"message\": \"" + e.getMessage() + "\"}");
+      } else if (e.getMessage().contains("incorrect")) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body("{\"message\": \"" + e.getMessage() + "\"}");
+      } else {
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body("{\"message\": \"Erreur lors du renouvellement: " + e.getMessage() + "\"}");
+      }
+    }
+  }
+
+  @GetMapping("/{email}/password/status")
+  @Override
+  public ResponseEntity<String> checkPasswordStatus(@PathVariable String email) {
+    try {
+      boolean isExpired = userService.isPasswordExpired(email);
+      long daysRemaining = userService.getDaysUntilPasswordExpiration(email);
+
+      if (isExpired) {
+        return ResponseEntity.ok("{\"expired\": true, \"daysRemaining\": 0, \"message\": \"Votre mot de passe a expiré. Veuillez le renouveler.\"}");
+      } else {
+        return ResponseEntity.ok("{\"expired\": false, \"daysRemaining\": " + daysRemaining + ", \"message\": \"Votre mot de passe est valide.\"}");
+      }
+    } catch (Exception e) {
+      e.printStackTrace();
+      return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+              .body("{\"message\": \"Erreur lors de la vérification: " + e.getMessage() + "\"}");
     }
   }
 }

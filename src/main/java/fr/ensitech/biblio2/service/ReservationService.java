@@ -31,7 +31,6 @@ public class ReservationService implements IReservationService {
   @Override
   @Transactional
   public Reservation reserveBook(long bookId, String email) throws Exception {
-    // 1. Vérifier que l'utilisateur existe et est actif
     User user = userRepository.findByEmail(email);
     if (user == null) {
       throw new Exception("Utilisateur non trouvé");
@@ -40,29 +39,24 @@ public class ReservationService implements IReservationService {
       throw new Exception("Compte utilisateur non activé");
     }
 
-    // 2. Vérifier que le livre existe
     Book book = bookRepository.findById(bookId)
             .orElseThrow(() -> new Exception("Livre non trouvé"));
 
-    // 3. Vérifier que l'utilisateur n'a pas déjà réservé ce livre
     long existingReservation = reservationRepository.countActiveReservationsByUserAndBook(user.getId(), bookId);
     if (existingReservation > 0) {
       throw new Exception("Vous avez déjà réservé ce livre");
     }
 
-    // 4. Vérifier que l'utilisateur n'a pas atteint la limite de 3 réservations
     long userActiveReservations = reservationRepository.countActiveReservationsByUserId(user.getId());
     if (userActiveReservations >= 3) {
       throw new Exception("Vous avez atteint la limite de 3 réservations actives");
     }
 
-    // 5. Vérifier le stock disponible
     int availableStock = getAvailableStock(bookId);
     if (availableStock <= 0) {
       throw new Exception("Ce livre n'est plus disponible");
     }
 
-    // 6. Créer la réservation
     Reservation reservation = new Reservation();
     reservation.setUser(user);
     reservation.setBook(book);
@@ -71,7 +65,6 @@ public class ReservationService implements IReservationService {
 
     Reservation savedReservation = reservationRepository.save(reservation);
 
-    // 7. Envoyer un email de confirmation
     emailService.sendReservationConfirmationEmail(
             user.getEmail(),
             user.getFirstName(),
@@ -106,14 +99,11 @@ public class ReservationService implements IReservationService {
     Book book = bookRepository.findById(bookId)
             .orElseThrow(() -> new Exception("Livre non trouvé"));
 
-    // Stock total du livre
     int totalStock = book.getStock();
 
-    // Nombre de réservations actives pour ce livre
     List<Reservation> activeReservations = reservationRepository.findByBookAndStatus(book, "ACTIVE");
     int reservedCount = activeReservations.size();
 
-    // Stock disponible = stock total - réservations actives
     return totalStock - reservedCount;
   }
 }

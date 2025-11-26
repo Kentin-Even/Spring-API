@@ -10,11 +10,6 @@ import java.util.Base64;
 @Service
 public class SecurityAnswerService {
 
-  /**
-   * Hash une réponse de sécurité avec SHA-256
-   * @param answer la réponse en clair
-   * @return la réponse hashée en Base64
-   */
   public String hashSecurityAnswer(String answer) {
     try {
       MessageDigest digest = MessageDigest.getInstance("SHA-256");
@@ -25,12 +20,6 @@ public class SecurityAnswerService {
     }
   }
 
-  /**
-   * Vérifie si une réponse correspond au hash stocké
-   * @param plainAnswer la réponse fournie par l'utilisateur
-   * @param hashedAnswer le hash stocké en base
-   * @return true si la réponse correspond
-   */
   public boolean verifySecurityAnswer(String plainAnswer, String hashedAnswer) {
     String hashedInput = hashSecurityAnswer(plainAnswer);
     return hashedInput.equals(hashedAnswer);

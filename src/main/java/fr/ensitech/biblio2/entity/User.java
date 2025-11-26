@@ -38,6 +38,20 @@ public class User {
   @Column(name = "active", nullable=false)
   private boolean active;
 
+  @Enumerated(EnumType.STRING)
+  @Column(name = "security_question", nullable=true, length=50)
+  private SecurityQuestion securityQuestion;
+
+  @Column(name = "security_answer_hash", nullable=true, length=128)
+  private String securityAnswerHash;
+
+  @Column(name = "password_updated_at", nullable=true)
+  @Temporal(TemporalType.TIMESTAMP)
+  private Date passwordUpdatedAt;
+
   @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
   private Set<Reservation> reservations = new HashSet<>();
+
+  @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+  private Set<PasswordHistory> passwordHistories = new HashSet<>();
 }

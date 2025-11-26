@@ -129,7 +129,6 @@ public class BookController implements IBookController {
     }
   }
 
-  // Nouvelle fonctionnalité : Réserver un livre
   @PutMapping("/reserver/{bookId}/{email}")
   @Override
   public ResponseEntity<String> reserveBook(@PathVariable long bookId, @PathVariable String email) {
@@ -144,7 +143,6 @@ public class BookController implements IBookController {
     } catch (Exception e) {
       e.printStackTrace();
 
-      // Gestion des différents types d'erreurs
       if (e.getMessage().contains("non trouvé")) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .body("{\"message\": \"" + e.getMessage() + "\"}");

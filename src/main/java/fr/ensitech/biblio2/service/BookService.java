@@ -51,7 +51,7 @@ public class BookService implements IBookService {
     if (optionalBook.isEmpty()) {
       throw new Exception("Book with id " + id + " not found");
     }
-    bookRepository.deleteById(id);  // Utiliser deleteById au lieu de delete
+    bookRepository.deleteById(id);
   }
 
   @Override

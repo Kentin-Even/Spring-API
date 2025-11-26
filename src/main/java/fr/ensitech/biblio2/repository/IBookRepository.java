@@ -19,6 +19,4 @@ public interface IBookRepository extends JpaRepository<Book, Long> {
   List<Book> findByTitleContainingIgnoreCaseOrDescriptionContainingIgnoreCase(String title, String description);
   List<Book> findByPublicationDateBetween(Date start, Date end);
 
-  // @Query("select b form Book b where ")
-  //List<Book> findBooksByAuthor(String author);
 }

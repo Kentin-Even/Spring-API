@@ -1,7 +1,9 @@
 package fr.ensitech.biblio2.controller;
 
 import fr.ensitech.biblio2.entity.Book;
+import fr.ensitech.biblio2.entity.Reservation;
 import fr.ensitech.biblio2.service.IBookService;
+import fr.ensitech.biblio2.service.IReservationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,6 +19,9 @@ public class BookController implements IBookController {
 
   @Autowired
   private IBookService bookService;
+
+  @Autowired
+  private IReservationService reservationService;
 
   @PostMapping("/create")
   @Override
@@ -121,6 +126,37 @@ public class BookController implements IBookController {
       return new ResponseEntity<>(books, HttpStatus.OK);
     } catch (Exception e) {
       throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Erreur lors de la récupération des livres");
+    }
+  }
+
+  // Nouvelle fonctionnalité : Réserver un livre
+  @PutMapping("/reserver/{bookId}/{email}")
+  @Override
+  public ResponseEntity<String> reserveBook(@PathVariable long bookId, @PathVariable String email) {
+    if (email == null || email.isEmpty()) {
+      return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+              .body("{\"message\": \"L'email est requis\"}");
+    }
+
+    try {
+      Reservation reservation = reservationService.reserveBook(bookId, email);
+      return ResponseEntity.ok("{\"message\": \"Livre réservé avec succès\", \"reservationId\": " + reservation.getId() + "}");
+    } catch (Exception e) {
+      e.printStackTrace();
+
+      // Gestion des différents types d'erreurs
+      if (e.getMessage().contains("non trouvé")) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body("{\"message\": \"" + e.getMessage() + "\"}");
+      } else if (e.getMessage().contains("déjà réservé") ||
+              e.getMessage().contains("limite") ||
+              e.getMessage().contains("disponible")) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body("{\"message\": \"" + e.getMessage() + "\"}");
+      } else {
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body("{\"message\": \"Erreur lors de la réservation: " + e.getMessage() + "\"}");
+      }
     }
   }
 }

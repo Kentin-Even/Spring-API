@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.util.Date;
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 @Table(name = "users", catalog = "biblio-database")
@@ -36,5 +38,6 @@ public class User {
   @Column(name = "active", nullable=false)
   private boolean active;
 
-
+  @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+  private Set<Reservation> reservations = new HashSet<>();
 }

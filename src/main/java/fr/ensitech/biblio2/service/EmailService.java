@@ -58,4 +58,36 @@ public class EmailService {
 
     mailSender.send(message);
   }
+
+  public void sendPasswordChangedEmail(String toEmail, String firstName, String lastName) {
+    SimpleMailMessage message = new SimpleMailMessage();
+    message.setFrom("dev.kentin@gmail.com");
+    message.setTo(toEmail);
+    message.setSubject("Modification de votre mot de passe - Biblio");
+    message.setText("Bonjour " + firstName + " " + lastName + ",\n\n" +
+            "Votre mot de passe a été modifié avec succès.\n\n" +
+            "Si vous n'êtes pas à l'origine de cette modification, " +
+            "veuillez contacter immédiatement notre support.\n\n" +
+            "Cordialement,\n" +
+            "L'équipe Biblio");
+
+    mailSender.send(message);
+  }
+
+  public void sendReservationConfirmationEmail(String toEmail, String firstName, String lastName, String bookTitle) {
+    SimpleMailMessage message = new SimpleMailMessage();
+    message.setFrom("dev.kentin@gmail.com");
+    message.setTo(toEmail);
+    message.setSubject("Confirmation de réservation - Biblio");
+    message.setText("Bonjour " + firstName + " " + lastName + ",\n\n" +
+            "Votre réservation a été effectuée avec succès !\n\n" +
+            "Détails de votre réservation :\n" +
+            "Livre : " + bookTitle + "\n\n" +
+            "Vous pouvez consulter toutes vos réservations actives depuis votre espace personnel.\n\n" +
+            "Merci de votre confiance !\n\n" +
+            "Cordialement,\n" +
+            "L'équipe Biblio");
+
+    mailSender.send(message);
+  }
 }

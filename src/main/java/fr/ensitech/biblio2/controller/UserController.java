@@ -48,7 +48,7 @@ public class UserController implements IUserController {
     }
   }
 
-  @GetMapping("/activate/{id}") // Changé de POST à GET
+  @GetMapping("/activate/{id}")
   @Override
   public ResponseEntity<String> activeUser(@PathVariable long id) {
     try {
@@ -85,6 +85,51 @@ public class UserController implements IUserController {
     } catch (Exception e) {
       e.printStackTrace();
       return new ResponseEntity<>("Erreur lors de la désinscription. Veuillez réessayer.", HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  // Nouvelle fonctionnalité : Mise à jour du profil
+  @PutMapping("/{id}/profile")
+  @Override
+  public ResponseEntity<String> updateUserProfile(@PathVariable long id, @RequestBody User user) {
+    if (user == null) {
+      return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+              .body("{\"message\": \"Les données de l'utilisateur sont requises\"}");
+    }
+
+    try {
+      userService.updateUserProfile(id, user);
+      return ResponseEntity.ok("{\"message\": \"Profil mis à jour avec succès\"}");
+    } catch (Exception e) {
+      e.printStackTrace();
+      return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+              .body("{\"message\": \"Erreur lors de la mise à jour du profil: " + e.getMessage() + "\"}");
+    }
+  }
+
+  // Nouvelle fonctionnalité : Mise à jour du mot de passe
+  @PutMapping("/{id}/{oldPwd}/{newPwd}")
+  @Override
+  public ResponseEntity<String> updateUserPassword(@PathVariable long id,
+                                                   @PathVariable String oldPwd,
+                                                   @PathVariable String newPwd) {
+    if (oldPwd == null || oldPwd.isEmpty() || newPwd == null || newPwd.isEmpty()) {
+      return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+              .body("{\"message\": \"L'ancien et le nouveau mot de passe sont requis\"}");
+    }
+
+    if (newPwd.length() < 6) {
+      return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+              .body("{\"message\": \"Le nouveau mot de passe doit contenir au moins 6 caractères\"}");
+    }
+
+    try {
+      userService.updateUserPassword(id, oldPwd, newPwd);
+      return ResponseEntity.ok("{\"message\": \"Mot de passe mis à jour avec succès\"}");
+    } catch (Exception e) {
+      e.printStackTrace();
+      return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+              .body("{\"message\": \"" + e.getMessage() + "\"}");
     }
   }
 }

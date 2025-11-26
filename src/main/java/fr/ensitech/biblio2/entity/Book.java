@@ -45,10 +45,16 @@ public class Book {
   @Column(name = "language", nullable = false, length = 5)
   private String language;
 
+  @Column(name = "stock", nullable = false)
+  private int stock = 0;
+
   @ManyToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
   @JoinTable(name = "author-book",
           joinColumns = @JoinColumn(name = "author-id"),
           inverseJoinColumns = @JoinColumn(name = "book-id")
   )
   private Set<Author> authors = new HashSet<Author>();
+
+  @OneToMany(mappedBy = "book", cascade = CascadeType.ALL, orphanRemoval = true)
+  private Set<Reservation> reservations = new HashSet<>();
 }

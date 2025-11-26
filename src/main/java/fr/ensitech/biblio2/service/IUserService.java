@@ -13,5 +13,7 @@ public interface IUserService {
   User activeUser(long id) throws Exception;
   User authenticatedUser(String email, String password) throws Exception;
   User deleteUser(long id) throws Exception;
-  void sendActivationMail(String email) throws Exception; // Changé en void
+  void sendActivationMail(String email) throws Exception;
+  void updateUserProfile(long id, User user) throws Exception;
+  void updateUserPassword(long id, String oldPassword, String newPassword) throws Exception;
 }

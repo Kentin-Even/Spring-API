@@ -3,6 +3,7 @@ package fr.ensitech.biblio2.controller;
 import fr.ensitech.biblio2.entity.User;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
 public interface IUserController {
@@ -10,6 +11,10 @@ public interface IUserController {
   ResponseEntity<String> activeUser(@PathVariable long id);
   ResponseEntity<String> authenticatedUser(@RequestParam String email,
                                            @RequestParam String password);
-  ResponseEntity<String> deleteUser(User user); // Changé en String
+  ResponseEntity<String> deleteUser(User user);
   ResponseEntity<User> sendActivationMail(@RequestParam String email);
+  ResponseEntity<String> updateUserProfile(@PathVariable long id, @RequestBody User user);
+  ResponseEntity<String> updateUserPassword(@PathVariable long id,
+                                            @PathVariable String oldPwd,
+                                            @PathVariable String newPwd);
 }

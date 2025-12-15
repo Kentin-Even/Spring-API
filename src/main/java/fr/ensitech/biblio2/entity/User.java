@@ -49,6 +49,9 @@ public class User {
   @Temporal(TemporalType.TIMESTAMP)
   private Date passwordUpdatedAt;
 
+  @Column(name = "pending_2fa", nullable=false)
+  private boolean pending2fa = false;
+
   @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
   private Set<Reservation> reservations = new HashSet<>();
 

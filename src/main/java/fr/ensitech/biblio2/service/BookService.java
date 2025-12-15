@@ -66,7 +66,13 @@ public class BookService implements IBookService {
   }
 
   @Override
-  public List<Book> getBooksByTitle(String title) throws Exception {
+  public Book getBookByTitle(String title) throws Exception {
+    List<Book> books = bookRepository.findByTitleIgnoreCase(title);
+    return books.isEmpty() ? null : books.get(0);
+  }
+
+  @Override
+  public List<Book> getBooksByTitleContaining(String title) throws Exception {
     return bookRepository.findByTitleContainingIgnoreCase(title);
   }
 

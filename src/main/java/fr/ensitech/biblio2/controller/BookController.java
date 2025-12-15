@@ -157,4 +157,123 @@ public class BookController implements IBookController {
       }
     }
   }
+
+  @GetMapping("/search/by-title")
+  @Override
+  public ResponseEntity<Book> getBookByTitle(@RequestParam String title) {
+    if (title == null || title.isEmpty()) {
+      return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+    }
+
+    try {
+      Book book = bookService.getBookByTitle(title);
+      if (book == null) {
+        return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+      }
+      return new ResponseEntity<>(book, HttpStatus.OK);
+    } catch (Exception e) {
+      e.printStackTrace();
+      throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
+              "Erreur lors de la recherche du livre par titre");
+    }
+  }
+
+  @GetMapping("/search/by-title-containing")
+  @Override
+  public ResponseEntity<List<Book>> getBooksByTitleContaining(@RequestParam String title) {
+    if (title == null || title.isEmpty()) {
+      return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+    }
+
+    try {
+      List<Book> books = bookService.getBooksByTitleContaining(title);
+      if (books.isEmpty()) {
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+      }
+      return new ResponseEntity<>(books, HttpStatus.OK);
+    } catch (Exception e) {
+      e.printStackTrace();
+      throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
+              "Erreur lors de la recherche des livres par titre contenant");
+    }
+  }
+
+  @GetMapping("/search/by-isbn")
+  @Override
+  public ResponseEntity<Book> getBookByIsbn(@RequestParam String isbn) {
+    if (isbn == null || isbn.isEmpty()) {
+      return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+    }
+
+    try {
+      Book book = bookService.getBookByIsbn(isbn);
+      if (book == null) {
+        return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+      }
+      return new ResponseEntity<>(book, HttpStatus.OK);
+    } catch (Exception e) {
+      e.printStackTrace();
+      throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
+              "Erreur lors de la recherche du livre par ISBN");
+    }
+  }
+
+  @GetMapping("/search/by-published")
+  @Override
+  public ResponseEntity<List<Book>> getBooksByPublished(@RequestParam boolean published) {
+    try {
+      List<Book> books = bookService.getBooksByPublished(published);
+      if (books.isEmpty()) {
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+      }
+      return new ResponseEntity<>(books, HttpStatus.OK);
+    } catch (Exception e) {
+      e.printStackTrace();
+      throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
+              "Erreur lors de la recherche des livres par statut de publication");
+    }
+  }
+
+  @GetMapping("/search/by-keyword")
+  @Override
+  public ResponseEntity<List<Book>> searchBooksByTitleOrDescription(@RequestParam String keyword) {
+    if (keyword == null || keyword.isEmpty()) {
+      return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+    }
+
+    try {
+      List<Book> books = bookService.getBooksByTitleOrDescription(keyword, keyword);
+      if (books.isEmpty()) {
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+      }
+      return new ResponseEntity<>(books, HttpStatus.OK);
+    } catch (Exception e) {
+      e.printStackTrace();
+      throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
+              "Erreur lors de la recherche des livres par mot-clé");
+    }
+  }
+
+  @GetMapping("/search/by-years")
+  @Override
+  public ResponseEntity<List<Book>> getBooksBetweenYears(
+          @RequestParam int startYear,
+          @RequestParam int endYear) {
+
+    if (startYear < 0 || endYear < 0 || startYear > endYear) {
+      return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+    }
+
+    try {
+      List<Book> books = bookService.getBooksBetweenYears(startYear, endYear);
+      if (books.isEmpty()) {
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+      }
+      return new ResponseEntity<>(books, HttpStatus.OK);
+    } catch (Exception e) {
+      e.printStackTrace();
+      throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
+              "Erreur lors de la recherche des livres entre deux années");
+    }
+  }
 }

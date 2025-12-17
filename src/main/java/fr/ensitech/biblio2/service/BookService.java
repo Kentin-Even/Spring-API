@@ -18,7 +18,7 @@ public class BookService implements IBookService {
   private IBookRepository bookRepository;
 
   @Override
-  public void addOrUpdateBook(Book book) throws Exception {
+  public Book addOrUpdateBook(Book book) throws Exception {
     if (book.getId() == null || book.getId() == 0) {
       bookRepository.save(book);
     } else {
@@ -42,7 +42,10 @@ public class BookService implements IBookService {
       _book.setNbPage(book.getNbPage());
       _book.setPublished(book.isPublished());
       bookRepository.save(_book);
+
+      return _book;
     }
+    return book;
   }
 
   @Override
